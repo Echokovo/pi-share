@@ -1,0 +1,17 @@
+{
+  "maxConcurrent": 5,
+  "maxConcurrentForeground": 5,
+  "maxSubagentDepth": 1,
+  "defaultMaxTurns": 0,
+  "scopeModels": true,
+  "fallbackSubagent": "none",
+  "schedulingEnabled": false,
+  "workflowsEnabled": false,
+  "worktreeIsolation": true,
+  "agentMentions": "off",
+  "rememberAgents": true,
+  "outputTranscript": true,
+  "reportUsage": true,
+  "showModel": true,
+  "showCost": true
+}

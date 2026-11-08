@@ -1,0 +1,99 @@
+{
+  "theme": "dark",
+  "defaultTools": [
+    "+codemode"
+  ],
+  "packages": [
+    "npm:pi-observational-memory",
+    "npm:@amaster.ai/pi-channels",
+    "git:github.com/Echokovo/pi-ask-channel-reminder",
+    "git:github.com/Echokovo/pi-update-changelog",
+    "npm:pi-token-speed",
+    "git:github.com/Echokovo/pi-ssh-tools",
+    "npm:@ssk_dev/pi-docs-slim",
+    "npm:@ssk_dev/rpiv-ask-user-question-lean",
+    "npm:@ssk_dev/pi-web-access-lean",
+    "npm:@ssk_dev/pi-subagents-lean"
+  ],
+  "extensions": [
+    "-builtin:llama.cpp",
+    "-builtin:mcp",
+    "-builtin:tool-search"
+  ],
+  "autocompleteMaxVisible": 20,
+  "collapseChangelog": true,
+  "tuiMode": "fullscreen",
+  "fullscreenExitOutput": "resume-hint",
+  "fullscreenScrollbar": "always",
+  "showCacheMissNotices": true,
+  "enableInstallTelemetry": false,
+  "hideThinkingBlock": true,
+  "treeFilterMode": "no-tools",
+  "defaultThinkingLevel": "high",
+  "showHardwareCursor": false,
+  "editorPaddingX": 0,
+  "outputPad": 0,
+  "quietStartup": "header",
+  "transport": "auto",
+  "cacheWarming": "idle",
+  "markdown": {
+    "codeBlockIndent": ""
+  },
+  "terminal": {
+    "showTerminalProgress": false,
+    "showImages": true,
+    "imageWidthCells": 60,
+    "images": "kitty"
+  },
+  "tokenSpeed": {
+    "display": "stats",
+    "formatDuration": true,
+    "icon": "",
+    "slidingWindow": 1000,
+    "endTpsBehavior": "average",
+    "displayColors": {
+      "count": "#00ff88",
+      "elapsed": "#ffaa00",
+      "ttft": "#44ddff"
+    },
+    "updateInterval": 0
+  },
+  "observational-memory": {
+    "observeAfterTokens": 25000,
+    "reflectAfterTokens": 50000,
+    "agentMaxTurns": 8,
+    "observerChunkMaxTokens": 120000,
+    "compactAfterTokensMode": "ratio",
+    "compactAfterTokensRatio": 0.5,
+    "observationsPoolMaxTokens": 20000,
+    "observationsPoolTargetTokens": 10000,
+    "debugLog": true
+  },
+  "pi-channels": {
+    "adapters": {
+      "feishu": {
+        "type": "feishu",
+        "eventMode": "off"
+      }
+    },
+    "routes": {
+      "ops": {
+        "adapter": "feishu",
+        "recipient": "oc_REPLACE_WITH_YOUR_OWN_CHAT_ID"
+      }
+    },
+    "bridge": {
+      "enabled": false
+    }
+  },
+  "pi-ask-reminder": {
+    "enabled": true,
+    "route": "ops",
+    "afterMs": 180000,
+    "repeatMs": 0,
+    "maxReminders": 1,
+    "includeDescriptions": false,
+    "maxChars": 1500,
+    "notifyResolved": true
+  }
+}

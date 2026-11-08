@@ -1,0 +1,15 @@
+{
+  "exaApiKey": "$EXA_API_KEY",
+  "fetchRouting": {
+    "providers": [
+      "http",
+      "jina"
+    ],
+    "allowRemoteHostedProviders": true
+  },
+  "ssrf": {
+    "trustEnvProxy": true
+  },
+  "workflow": "auto-summary",
+  "summaryModel": "deepseek/deepseek-flash:off"
+}

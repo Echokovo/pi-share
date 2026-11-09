@@ -13,7 +13,7 @@
 
 ```text
 README.md             # 本说明文档，照着做即可
-agent/                # 对应 ~/.pi/agent/ 目录（1:1 镜像）
+agent/                # 对应 ~/.pi/agent/ 目录（只入库配置类文件，排除清单见步骤 2）
 ├── settings.json      # 主配置：扩展清单 + 工具裁剪 + TUI + 插件参数
 ├── subagents.json     # 子代理隔离与并发策略（worktree 隔离、禁止套娃）
 ├── web-search.json    # web_access 路由与摘要模型配置
@@ -49,7 +49,7 @@ pi install npm:@ssk_dev/pi-web-access-lean
 
 ### 步骤 2：落位配置文件
 
-仓库中的 `agent/` 目录与 `~/.pi/agent/` 是 **1:1 镜像**。创建目录后直接同步即可：
+仓库中的 `agent/` 目录对应 `~/.pi/agent/`（凭据与运行时状态除外）。创建目录后直接同步即可：
 
 ```bash
 mkdir -p ~/.pi/agent
@@ -125,13 +125,22 @@ npx skills add Neeeophytee/agent-stylebooks -g -s microsoft-writing-style
 2. **把握最高质量的摘要节点**：若等到 80%~90% 才压缩，模型已处于低敏状态，容易产生信息丢失或错误提炼；在 50% 截断处压缩，被压缩的内容恰好是处于最佳注意力期产出的产物。
 3. **精准规避阶梯计费溢价**：阻止上下文触碰部分供应商对超长请求的溢价区间（`cost.tiers`）。
 
-**配置写法示例**：
+> 该策略写在 `~/.pi/agent/models.json`，本仓库**不入库**（含私有 `baseUrl`），故此处只给写法。
+
+**配置写法示例**（自建 provider 直接声明窗口；内置 provider 用 `modelOverrides` 只改窗口，其余沿用上游定义）：
 ```json
 {
   "providers": {
     "acme": {
+      "baseUrl": "https://api.acme.example/v1",
+      "apiKey": "$ACME_API_KEY",
+      "models": [
+        { "id": "acme-big", "contextWindow": 500000, "maxTokens": 64000 }
+      ]
+    },
+    "deepseek": {
       "modelOverrides": {
-        "acme-big": { "contextWindow": 500000 }
+        "deepseek-flash": { "contextWindow": 500000 }
       }
     }
   }
@@ -176,10 +185,12 @@ npx skills add Neeeophytee/agent-stylebooks -g -s microsoft-writing-style
 "observationsPoolTargetTokens": 10000,
 "observerChunkMaxTokens": 120000,
 "agentMaxTurns": 8,
+"model": { "provider": "deepseek", "id": "deepseek-flash", "thinking": "off" },
 "debugLog": true
 ```
 - 25k token 触发一次即时观察，50k token 触发阶段反思。
 - 达到上下文截断阈值（约 250k）触发压缩，压缩后依然保留约 10k token 的高价值观察池。
+- **`model` 必须显式指定**：不写则观察与反思默认跟着主力模型跑，长会话的后台提炼会悄悄吃掉一大块预算。此处钉死 `deepseek-flash` 并关闭 thinking（见 §3.1）。
 - `debugLog: true` 会在 `~/.pi/agent/observational-memory/debug/` 保留跟踪日志，便于诊断压缩质量；介意磁盘占用可设为 `false`。
 
 ### 运维告警与异步通知

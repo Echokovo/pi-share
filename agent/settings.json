@@ -67,6 +67,11 @@
     "compactAfterTokensRatio": 0.5,
     "observationsPoolMaxTokens": 20000,
     "observationsPoolTargetTokens": 10000,
+    "model": {
+      "provider": "deepseek",
+      "id": "deepseek-flash",
+      "thinking": "off"
+    },
     "debugLog": true
   },
   "pi-channels": {

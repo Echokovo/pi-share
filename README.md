@@ -331,6 +331,8 @@ herdr plugin action invoke herdr.auto-title.restart
 ## 6. 全局工作约定（`agent/AGENTS.md`）
 
 置于 `~/.pi/agent/AGENTS.md`，对当前设备上运行的所有 pi 进程强制生效。核心包含：
-- **硬性安全防线**：密钥严禁明文进任何文件或命令；破坏性命令（`git commit/push`、`reset`）执行前必须向用户显式确认并附带 `git status`。
+- **硬性安全防线**：密钥、Token、Cookie 严禁写进任何文件、代码、日志或命令参数；不为“测试全绿”而删改既有测试断言。
+- **先问再动**：`git push` 仅在用户明示后执行，提交前先跑 `git status` 汇报；`git reset --hard/clean/rebase`、`gh pr create/merge/close`、`gh release`，以及改动任务范围外文件、新增架构依赖、改数据库 Schema、ssh remote 目录与配置，一律先确认。
 - **任务交付自省交代**：阶段任务汇报必须包含 **「验证 / 盲区 / 假设 / 副作用」** 四段式自检，杜绝“全绿即通过”的盲区。
+- **工作区约定**：`~/ws` 一个主题一个目录；本人或维护项目根目录须有 `README.md`，第三方源码统一放 `~/ws/repos/<repo>/` 仅供阅读排查、不提交。
 - **分层优先级**：项目级 `AGENTS.md` 永远高于全局配置，全局约定仅承载最底层的操作安全基准。

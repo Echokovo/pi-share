@@ -1,6 +1,6 @@
 # 我的 pi 配置
 
-基于 **Pi 1.4.0+** 的个人主力 harness。包含 10 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层 herdr 多会话运行时。
+基于 **Pi 1.4.0+**（本机运行 1.5.2；1.6.0 的 `settings.schema.json` 与本文用到的配置键逐键一致）的个人主力 harness。包含 10 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层 herdr 多会话运行时。
 
 这套配置的核心理念只有三条：
 1. **极限降噪**：过滤树形工具调用展开，上下文与终端滚动区干净一个数量级。
@@ -11,13 +11,24 @@
 
 不含任何私有服务地址与敏感密钥。**照抄能跑，每一处都写清了取舍逻辑。**
 
+> ⚙️ **哪些是通用的，哪些只是我的本机偏好？**
+> 通用：扩展清单、子代理/记忆/搜索配置、TUI 降噪与预算策略，换台机器可直接照抄。
+> 本机偏好（按自己的环境改或整段删，不影响其余配置生效）：
+> - `agent/AGENTS.md`：`~/ws` 工作区目录约定、WSL2 + Docker 的 mirrored 网络限制、PaddleOCR-VL 路径、飞书通知格式。
+> - `agent/settings.json`：`terminal.images: "kitty"`（非 Kitty 终端改成 `"auto"`）、`theme` / `defaultThinkingLevel` / `tokenSpeed` 配色等外观与口味项、`pi-channels` 的飞书 adapter 与 `recipient`。
+
 > 💡 **让 Agent 代劳？** 你可以直接把下面这段话复制并发送给当前正在用的 agent（如 pi、OpenCode、Claude Code 等）：
 > 
 > ```text
-> 请阅读https://github.com/Echokovo/pi-share中的README.md，按照「1. 快速开始」的步骤 1、步骤 2 帮我安装扩展并落位配置。
+> 请阅读 https://github.com/Echokovo/pi-share 中的 README.md，按「1. 快速开始」的步骤 1、步骤 2 帮我安装扩展并落位配置。
+>
 > 要求：
-> 1. 落位前如果本地 ~/.pi/agent 下已有旧配置，先提醒我备份并展示 diff，不要直接覆盖。
-> 2. 遇到任何需要填写密钥、选择模型、修改 recipient 飞书 ID 或存在决策分歧的地方，务必停下来询问我，不要替我擅自决定。
+> 1. 动手前先确认前提：`pi --version` ≥ 1.4.0，`git` 与 `npm` 可用。若 `~/.pi/agent` 下已有旧配置，先备份并展示 diff，不要直接覆盖。
+> 2. 只安装 README 步骤 1 列出的 10 个包，不要自行追加扩展或改动架构。
+> 3. README 顶部的「本机偏好」清单（`~/ws` 工作区约定、WSL2/Docker 网络限制、PaddleOCR-VL、飞书通知、`terminal.images: "kitty"`、外观配色）不是每台机器都需要，逐条问我是否保留，不需要就删掉对应段落。
+> 4. 需要填写密钥（`DEEPSEEK_API_KEY`、`EXA_API_KEY`）、选择模型、修改飞书 `recipient`，或遇到任何分歧时，停下来问我，不要替我决定；密钥只写进你的 shell 配置文件，不要写进仓库。
+> 5. 落位后自检并汇报：`jq empty ~/.pi/agent/*.json` 是否通过；启动 pi 或 `/reload` 后扩展是否加载；`/model` 里能否选到廉价模型（若配了 `enabledModels`，需确认它已在白名单里）；`/context` 显示的窗口是否符合预期。
+> 6. 不要执行 `git commit` / `git push`，也不要改动 `~/.pi/agent` 与当前项目之外的文件。
 > ```
 
 ```text
@@ -49,7 +60,7 @@ pi install git:github.com/Echokovo/pi-ask-channel-reminder
 pi install npm:@ssk_dev/rpiv-ask-user-question-lean
 pi install git:github.com/Echokovo/pi-ssh-tools
 pi install npm:pi-token-speed
-pi install git:github.com/Echokovo/pi-update-changelog
+pi install git:github.com/Echokovo/pi-update-summary
 
 # 工具与子代理增强
 pi install npm:@ssk_dev/pi-subagents-lean
@@ -67,7 +78,9 @@ cp -r agent/* ~/.pi/agent/
 
 > ⚠️ **落地检查**：
 > - 若已有配置，建议先 `diff` 备份后再覆盖。
+> - `agent/AGENTS.md` 里的 `~/ws` 工作区约定、WSL2/Docker、PaddleOCR-VL、飞书通知属本机偏好，可按自己的环境删改。
 > - 检查 `~/.pi/agent/settings.json`：若使用飞书通知，将 `pi-channels.routes.ops.recipient` 改为你的飞书 chat ID；若暂不需要通知，将 `pi-ask-reminder.enabled` 设为 `false` 即可。
+> - 若终端不是 Kitty，把 `terminal.images` 从 `"kitty"` 改为 `"auto"`，否则行内图片可能不显示。
 
 ### 步骤 3：配置环境变量
 
@@ -176,8 +189,8 @@ herdr 不强制要求配置文件，默认值即可用；需要改键位或实�
 
 | 插件 | 版本 | 作用 |
 |---|---|---|
-| `herdr-sidebar`（alexarthurs） | 0.15.1 | 在 tab 左侧开一个约 15% 宽的文件树 + 源代码管理 pane，含 AI commit message、Quick Open、项目文本搜索 |
-| `herdr.auto-title`（kryptamine） | 0.21.0 | 按 pane 里的任务内容自动给 tab 起名，省掉手动重命名 |
+| `herdr-sidebar`（alexarthurs） | 0.16.0 | 在 tab 左侧开一个约 15% 宽的文件树 + 源代码管理 pane，含 AI commit message、Quick Open、项目文本搜索 |
+| `herdr.auto-title`（kryptamine） | 0.23.1 | 按 pane 里的任务内容自动给 tab 起名，省掉手动重命名 |
 
 ```bash
 herdr plugin install alexarthurs/herdr-sidebar/plugins/herdr-sidebar
@@ -294,7 +307,7 @@ herdr plugin action invoke herdr.auto-title.restart
 ```json
 "pi-channels": {
   "adapters": { "feishu": { "type": "feishu", "eventMode": "off" } },
-  "routes": { "ops": { "adapter": "feishu", "recipient": "YOUR_CHAT_ID" } },
+  "routes": { "ops": { "adapter": "feishu", "recipient": "oc_REPLACE_WITH_YOUR_OWN_CHAT_ID" } },
   "bridge": { "enabled": false }
 },
 "pi-ask-reminder": {
@@ -332,7 +345,9 @@ herdr plugin action invoke herdr.auto-title.restart
 
 置于 `~/.pi/agent/AGENTS.md`，对当前设备上运行的所有 pi 进程强制生效。核心包含：
 - **硬性安全防线**：密钥、Token、Cookie 严禁写进任何文件、代码、日志或命令参数；不为“测试全绿”而删改既有测试断言。
-- **先问再动**：`git push` 仅在用户明示后执行，提交前先跑 `git status` 汇报；`git reset --hard/clean/rebase`、`gh pr create/merge/close`、`gh release`，以及改动任务范围外文件、新增架构依赖、改数据库 Schema、ssh remote 目录与配置，一律先确认。
+- **先问再动**：`git push` 仅在用户明示后执行，提交前先跑 `git status` 汇报；`git reset --hard/clean/rebase`、`gh pr create/merge/close`、`gh release`、`sudo`，以及改动任务范围外文件、新增架构依赖、改数据库 Schema、ssh remote 目录与配置，一律先确认。
+- **编码与排错原则**：按「现有命令 → 删旧或复用 → 平台与依赖 → 最小改动 → 新抽象」取第一个足够的方案；只写当前需求用得上的代码，新抽象、新依赖与防御式代码都要有当前用途；协议、解析、序列化等用成熟库；连续三次失败即停并指出可疑假设。
 - **任务交付自省交代**：阶段任务汇报必须包含 **「验证 / 盲区 / 假设 / 副作用」** 四段式自检，杜绝“全绿即通过”的盲区。
-- **工作区约定**：`~/ws` 一个主题一个目录；本人或维护项目根目录须有 `README.md`，第三方源码统一放 `~/ws/repos/<repo>/` 仅供阅读排查、不提交。
+- **本机运维小节（可选）**：常用命令、WSL2 Docker 网络限制、飞书通知格式、压缩记忆的 `recall` 检索约定，随文件一并落位；不属于这些环境时整段删掉即可。
+- **工作区约定（本机偏好）**：`~/ws` 一个主题一个目录；本人或维护项目根目录须有 `README.md`，第三方源码统一放 `~/ws/repos/<repo>/` 仅供阅读排查、不提交。
 - **分层优先级**：项目级 `AGENTS.md` 永远高于全局配置，全局约定仅承载最底层的操作安全基准。

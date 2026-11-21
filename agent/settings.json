@@ -98,7 +98,6 @@
     "repeatMs": 0,
     "maxReminders": 1,
     "includeDescriptions": false,
-    "maxChars": 1500,
-    "notifyResolved": true
+    "maxChars": 1500
   }
 }

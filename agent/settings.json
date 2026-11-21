@@ -7,7 +7,7 @@
     "npm:pi-observational-memory",
     "npm:@amaster.ai/pi-channels",
     "git:github.com/Echokovo/pi-ask-channel-reminder",
-    "git:github.com/Echokovo/pi-update-changelog",
+    "git:github.com/Echokovo/pi-update-summary",
     "npm:pi-token-speed",
     "git:github.com/Echokovo/pi-ssh-tools",
     "npm:@ssk_dev/pi-docs-slim",

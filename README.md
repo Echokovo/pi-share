@@ -1,6 +1,6 @@
 # 我的 pi 配置
 
-基于 **Pi 1.4.0+** 的个人主力 harness。包含 10 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层可选的多会话运行时（herdr 或 Orca，二选一）。
+基于 **Pi 1.4.0+** 的个人主力 harness。包含 15 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层可选的多会话运行时（herdr 或 Orca，二选一）。
 
 这套配置的核心理念只有三条：
 1. **极限降噪**：过滤树形工具调用展开，上下文与终端滚动区干净一个数量级。
@@ -24,7 +24,7 @@
 >
 > 要求：
 > 1. 动手前先确认前提：`pi --version` ≥ 1.4.0，`git` 与 `npm` 可用。若 `~/.pi/agent` 下已有旧配置，先备份并展示 diff，不要直接覆盖。
-> 2. 只安装 README 步骤 1 列出的 10 个包，不要自行追加扩展或改动架构。
+> 2. 只安装 README 步骤 1 列出的 15 个包，不要自行追加扩展或改动架构。
 > 3. README 顶部的「本机偏好」清单（`~/ws` 工作区约定、WSL2/Docker 网络限制、PaddleOCR-VL、飞书通知、`terminal.images: "kitty"`、外观配色）不是每台机器都需要，逐条问我是否保留，不需要就删掉对应段落。
 > 4. 需要填写密钥（`DEEPSEEK_API_KEY`、`EXA_API_KEY`）、选择模型、修改飞书 `recipient`，或遇到任何分歧时，停下来问我，不要替我决定；密钥只写进你的 shell 配置文件，不要写进仓库。
 > 5. 落位后自检并汇报：`jq empty ~/.pi/agent/*.json` 是否通过；启动 pi 或 `/reload` 后扩展是否加载；`/model` 里能否选到廉价模型（若配了 `enabledModels`，需确认它已在白名单里）；`/context` 显示的窗口是否符合预期。
@@ -54,10 +54,17 @@ agent/                # 对应 ~/.pi/agent/ 目录（只入库配置类文件，
 pi install npm:@ssk_dev/pi-docs-slim
 pi install npm:pi-observational-memory
 
+# 上下文可视化与降噪
+pi install npm:pi-nano-context
+pi install npm:pi-context-view
+pi install npm:@luan.sh/pi-collapse-transcript
+
 # 交互、通知与运维
 pi install npm:@amaster.ai/pi-channels
 pi install git:github.com/Echokovo/pi-ask-channel-reminder
 pi install npm:@ssk_dev/rpiv-ask-user-question-lean
+pi install npm:pi-invisible-continue          # 用不可见提示续接 agentic loop
+pi install git:github.com/Echokovo/pi-hide-hf  # 有 HF_TOKEN 时从模型选择器过滤 HuggingFace 模型
 pi install git:github.com/Echokovo/pi-ssh-tools
 pi install npm:pi-token-speed
 pi install git:github.com/Echokovo/pi-update-summary
@@ -354,6 +361,7 @@ pi --resume        # 列出来挑一个
 - `"treeFilterMode": "no-tools"`：**体感最明显的降噪项**。工具执行详情不折叠渲染进交互树，会话界面极度清爽（临时看详情可用 `/tree-filter all`）。
 - `"showCacheMissNotices": true`：刻意开启。提示词缓存未命中时即时感知，便于定位 Prompt 破坏性变更。
 - `"fullscreenExitOutput": "resume-hint"`：全屏退出时打印一键恢复会话命令，保护上下文不丢失。
+- 视图层另有三个扩展补位：`pi-nano-context`（编辑器下方紧凑分段上下文条，替换默认上下文计）、`pi-context-view`（可视化 base prompt / 工具定义 / 扩展注入）、`@luan.sh/pi-collapse-transcript`（工具活动折叠成可展开分组）。它们管“历史怎么折叠”，与 `treeFilterMode` 管“树里过滤什么”互不替代。
 
 ### 记忆调度（pi-observational-memory）
 ```json

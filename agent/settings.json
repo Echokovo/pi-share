@@ -13,7 +13,12 @@
     "npm:@ssk_dev/pi-docs-slim",
     "npm:@ssk_dev/rpiv-ask-user-question-lean",
     "npm:@ssk_dev/pi-web-access-lean",
-    "npm:@ssk_dev/pi-subagents-lean"
+    "npm:@ssk_dev/pi-subagents-lean",
+    "npm:pi-nano-context",
+    "npm:pi-context-view",
+    "npm:@luan.sh/pi-collapse-transcript",
+    "npm:pi-invisible-continue",
+    "git:github.com/Echokovo/pi-hide-hf"
   ],
   "extensions": [
     "-builtin:llama.cpp",

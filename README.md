@@ -1,13 +1,13 @@
 # 我的 pi 配置
 
-基于 **Pi 1.4.0+** 的个人主力 harness。包含 10 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层 herdr 多会话运行时。
+基于 **Pi 1.4.0+** 的个人主力 harness。包含 10 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层可选的多会话运行时（herdr 或 Orca，二选一）。
 
 这套配置的核心理念只有三条：
 1. **极限降噪**：过滤树形工具调用展开，上下文与终端滚动区干净一个数量级。
 2. **三层预算分流**：主会话用旗舰模型，观察/反思/子代理/网页摘要全部钉死廉价 Flash 模型，杜绝后台隐形吞 token。
 3. **长会话保活**：故意将声明上下文窗口砍半，配合比率压缩，规避长文本“中间遗忘”，确保 50 万 token 以上长会话依然敏锐。
 
-三条之外还有一层可选运行时：**herdr** 把多个 pi 会话放进同一终端的不同 pane，进程常驻、状态可见（见 §2.2）。
+三条之外还有一层可选运行时，二选一：**herdr** 把多个 pi 会话放进同一终端的不同 pane，跨平台、装完即用；**Orca** 把运行时放进一台 Linux/WSL 服务端，Windows 与手机只做 UI，本机现役（见 §2.2）。
 
 不含任何私有服务地址与敏感密钥。**照抄能跑，每一处都写清了取舍逻辑。**
 
@@ -93,7 +93,7 @@ export EXA_API_KEY="your-exa-key"  # 若不用 Exa，需从 web-search.json 移�
 
 配置完毕后，启动 `pi` 或在已有会话中输入 `/reload` 即可生效。
 
-> 🚀 **核心能力现已就绪！** 若需要**多个会话并行、终端后台常驻**，继续参考选装中的 [§2.2 多会话运行时 (herdr)](#22-多会话用-herdr-承载多个-pi)。
+> 🚀 **核心能力现已就绪！** 若需要**多个会话并行、终端后台常驻**，继续参考选装中的 [§2.2 多会话运行时](#22-多会话运行时herdr-或-orca)。
 
 ---
 
@@ -118,11 +118,27 @@ npx skills add Neeeophytee/agent-stylebooks -g -s microsoft-writing-style
 - **常用命令**：`npx skills ls -g` 查看列表，`npx skills update -g` 同步上游更新。
 - **使用方式**：按需自动触发，也可通过 `/skill:<name>` 强制载入会话。
 
-### 2.2 多会话：用 herdr 承载多个 pi
+### 2.2 多会话运行时：herdr 或 Orca
 
 pi 的 TUI 一个进程一次只呈现一个会话。A 项目等测试、想同时处理 B 项目报错时，多开终端窗口切起来费劲，断网或手滑关窗进程就丢，也看不清后台会话是否正在等待交互。
 
-我们使用 **herdr** 来承载运行时。它类似 tmux，但原生为 Agent 场景设计：pane 里的 pi 会被识别并把 `working/blocked/idle/done` 状态汇聚在侧边栏，同时支持 CLI/Socket 供外部脚本调度。
+两条路都能解决，**装一个就够**：
+
+| | [herdr](#herdr终端里的多-pane通用) | [Orca](#orca服务端与客户端分离本机现役) |
+|---|---|---|
+| 形态 | 终端里的 pane 管理器（tmux 类） | 服务端 + 客户端分离的前端（IDE 类） |
+| 跑在哪 | 任意 Linux / macOS / WSL 终端 | 运行时在 Linux / WSL，UI 在 Windows / macOS / 手机 |
+| 关窗、断连 | pane 归 server，pi 不中断 | 同理，且可多个客户端接回同一批 tab |
+| 重启后 | 布局与 cwd 复原，可配置自动 `pi --session` | 布局与 scrollback 复原，**agent 进程不回来** |
+| agent 状态与通知 | 插件订阅事件 + 侧边栏 | 自带状态点、Needs You 计数、系统通知 |
+| 额外能力 | `worktree create` 一行隔离分支 | diff、PR、worktree 托管、内置终端 daemon |
+| 代价 | 一套键位 + 一个后台 server | 两端版本必须一致、只有自家客户端能接 |
+
+本机现役是 Orca；herdr 仍是「只想在终端里多开」的轻方案。
+
+#### herdr：终端里的多 pane（通用）
+
+**herdr** 类似 tmux，但原生为 Agent 场景设计：pane 里的 pi 会被识别并把 `working/blocked/idle/done` 状态汇聚在侧边栏，同时支持 CLI/Socket 供外部脚本调度。
 
 ```text
 herdr server（后台常驻，持有所有 PTY）
@@ -132,7 +148,7 @@ herdr server（后台常驻，持有所有 PTY）
         └── pane w1:p2  pi 会话 B（idle - 等待输入）
 ```
 
-#### 为什么不用“多开几个终端”？
+##### 为什么不用“多开几个终端”？
 
 | 痛点 | 普通多终端 | herdr |
 |---|---|---|
@@ -144,7 +160,7 @@ herdr server（后台常驻，持有所有 PTY）
 
 代价是多一层键位与一个后台 server；不需要并行时完全可以不装，pi 单会话照常工作。
 
-#### 安装与集成
+##### 安装与集成
 
 ```bash
 # 1. 安装 herdr（Linux/macOS；后续 herdr update 自更新）
@@ -159,7 +175,7 @@ herdr
 
 herdr 不强制要求配置文件，默认值即可用；需要改键位或实验项时再建 `~/.config/herdr/config.toml`（用 `herdr --default-config` 取全量字段）。
 
-#### 日常操作速记
+##### 日常操作速记
 
 - **快捷键**：默认前缀键为 `ctrl+b`（按后松开，再按动作键）：
   - `ctrl+b c`：新建 tab → `cd ~/ws/project-b && pi`
@@ -172,7 +188,7 @@ herdr 不强制要求配置文件，默认值即可用；需要改键位或实�
 - **鼠标支持**：pane、tab、workspace、分割线与右键菜单均支持鼠标点击与拖拽，不背键位也能平滑上手。
 - **独立环境**：一个 pane 一个 pi 进程 = 一份独立 session 文件。`cd` 决定 pi 的会话目录，不同项目天然隔离；同一目录想接着上次跑，用 `pi --continue` 或 `pi --session <path>`。
 
-#### 存活与恢复
+##### 存活与恢复
 
 | 场景 | 结果 |
 |---|---|
@@ -183,7 +199,7 @@ herdr 不强制要求配置文件，默认值即可用；需要改键位或实�
 
 > ⚠️ `pane_history` 上游默认关闭是有理由的：它把终端输出落盘到 `~/.config/herdr/session-history.json`，可能包含 token、密钥或私有代码，请按 shell history 同等敏感度对待。
 
-#### 推荐配套插件
+##### 推荐配套插件
 
 推荐两个 herdr 的常用插件：
 
@@ -196,6 +212,60 @@ herdr 不强制要求配置文件，默认值即可用；需要改键位或实�
 herdr plugin install alexarthurs/herdr-sidebar/plugins/herdr-sidebar
 herdr plugin install kryptamine/herdr-auto-title --ref stable
 herdr plugin action invoke herdr.auto-title.restart
+```
+
+> 📌 表格里的版本是本文档实测过的（herdr 0.9.5）；安装命令本身不锁版本，读者装到的会更晚。
+
+#### Orca：服务端与客户端分离（本机现役）
+
+官方的远程形态叫 Remote Orca Server：一台机器跑运行时（仓库、worktree、PTY、agent 进程），别的机器只做 UI。本机把运行时放在 WSL，客户端放在 Windows，手机当第二个客户端。它**不是** SSH target，也不是 `\\wsl.localhost`（那条走 9P，git 与文件监视都慢）。
+
+> 前提：Windows 客户端拨的是 `localhost:6768`，这个环回依赖 WSL2 的 `[wsl2] networkingMode=Mirrored`（`.wslconfig`，Windows 11 22H2+；**不是默认值**，NAT 模式下拨不通）。
+
+```text
+Windows · Orca 客户端（UI）
+   │  localhost:6768
+   ▼
+WSL · orca-serve.service（user unit）
+   ├─ ~/ws/* 仓库与 worktree
+   ├─ 终端 PTY + agent 进程（pi / claude / codex）
+   └─ 手机 / 另一台机器 ◀── tailnet
+```
+
+服务端用 **server 专用 tar 包**，不是 `.deb` / AppImage：只含 `orcad` + 固定 Node + `bin/orca-ide`，没有 Electron，WSL 里不必补 X/GTK 依赖。代价是没有内置浏览器面板、听写与 paired web 客户端。Linux 上 CLI 叫 **`orca-ide`**（`orca` 这个名字让给了 GNOME 读屏）。
+
+```bash
+V=<与服务端客户端相同的版本>
+mkdir -p ~/.local/share/orca-server && cd ~/.local/share/orca-server
+base=https://github.com/stablyai/orca/releases/download/v$V
+curl -fLO "$base/orca-server-linux-x64.tar.gz"
+curl -fLO "$base/orca-server-sha256sums.txt"
+grep 'orca-server-linux-x64' orca-server-sha256sums.txt | sha256sum -c -
+tar -xzf orca-server-linux-x64.tar.gz --strip-components=1
+install -d ~/.local/bin && ln -sf "$PWD/bin/orca-ide" ~/.local/bin/orca-ide
+
+# 固化成 user unit（--port/--bind 直接写进 ExecStart，并 enabled）
+orca-ide serve service install --port 6768 --bind 0.0.0.0
+orca-ide serve service status
+
+# 向正在跑的服务端要一条配对链接（不重启、不影响已连客户端）
+orca-ide pair --address localhost
+```
+
+Windows 客户端：装 `orca-windows-setup.exe` → Settings → Remote Orca Servers → Add Server → 粘贴链接。配对授权存在 profile 里，服务重启、电脑重启都不用手工重连。
+
+四个要点：
+
+- **两端版本必须一致**，否则客户端显示 `incompatible protocol version`。
+- **绑定地址就是允许配对的来源。** `--bind 0.0.0.0` 是为了让手机直连局域网；只想本机用时改 `127.0.0.1` 并重启。
+- **agent 状态由 Orca 自己写。** 客户端会往 `~/.pi/agent/extensions/` 投放三个 `@orca-managed-pi-extension` 文件——`orca-agent-status.ts`（状态点与通知）、`orca-prefill.ts`、`orca-titlebar-spinner.ts`，随客户端版本更新，不用手工装、也不该提交进任何仓库；通知走它的 `notifications.*`，不需要任何 herdr 插件。
+- **用 agent 下拉框启动 agent，不要手敲 `pi`。** 手敲的 tab 不会被认作 agent tab：没有状态点，不进 Needs You 计数与 Agents feed。
+
+重启后 Orca 只恢复布局与最后一次 scrollback，agent 进程与 pi 会话都不会自动回来，手动接：
+
+```bash
+pi --continue      # 同目录最近一个会话
+pi --resume        # 列出来挑一个
 ```
 
 ---

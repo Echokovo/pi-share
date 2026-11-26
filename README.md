@@ -298,17 +298,17 @@ pi --resume        # 列出来挑一个
 ### 3.2 上下文预算：故意将声明窗口砍半
 
 `pi` 计算记忆压缩阈值依据的是客户端声明的 `contextWindow`，而非服务端的实际承载上限。
-在这套配置中，**所有云端长上下文模型全部将声明值人为截断为 `500,000`**，并配合 `compactAfterTokensRatio: 0.5`：
+在这套配置中，**所有云端长上下文模型全部将声明值人为截断为 `500,000`**，并配合 `compactAfterTokensRatio: 0.4`：
 
 ```text
 模型实际承载: 1,000,000 token
-声明窗口截断:   500,000 token  ──(ratio: 0.5)──>  约 250,000 token 即触发压缩
-实际工作区间: 保持在 0 ~ 250k token 最敏锐区间
+声明窗口截断:   500,000 token  ──(ratio: 0.4)──>  约 200,000 token 即触发压缩
+实际工作区间: 保持在 0 ~ 200k token 最敏锐区间
 ```
 
 **为什么值得做？**
 1. **规避“中间遗忘（Lost in the Middle）”**：长上下文的注意力随长度显著摊薄。200k 内的信息检索与指令遵从准确率远高于 900k。
-2. **把握最高质量的摘要节点**：若等到 80%~90% 才压缩，模型已处于低敏状态，产出的摘要往往丢失关键细节；在 50% 截断处压缩，被压缩的内容恰好是处于最佳注意力期产出的产物。
+2. **把握最高质量的摘要节点**：若等到 80%~90% 才压缩，模型已处于低敏状态，产出的摘要往往丢失关键细节；在 40% 截断处压缩，被压缩的内容恰好是处于最佳注意力期产出的产物。
 3. **精准规避阶梯计费溢价**：阻止上下文触碰部分供应商对超长请求设置的高倍率溢价区间（`cost.tiers`）。
 
 > 该策略配置在 `~/.pi/agent/models.json`，因含私有 `baseUrl` 本仓库**不入库**，此处给出标准写法。
@@ -368,7 +368,7 @@ pi --resume        # 列出来挑一个
 "observeAfterTokens": 25000,
 "reflectAfterTokens": 50000,
 "compactAfterTokensMode": "ratio",
-"compactAfterTokensRatio": 0.5,
+"compactAfterTokensRatio": 0.4,
 "observationsPoolMaxTokens": 20000,
 "observationsPoolTargetTokens": 10000,
 "observerChunkMaxTokens": 120000,
@@ -377,7 +377,7 @@ pi --resume        # 列出来挑一个
 "debugLog": true
 ```
 - 25k token 触发一次即时观察，50k token 触发阶段反思。
-- 达到上下文截断阈值（约 250k）触发压缩，压缩后依然保留约 10k token 的高价值观察池。
+- 达到上下文截断阈值（约 200k）触发压缩，压缩后依然保留约 10k token 的高价值观察池。
 - `model` 显式绑定低成本 Flash 模型（参见 §3.1），杜绝后台提炼蚕食主预算。
 - `debugLog: true` 会在 `~/.pi/agent/observational-memory/debug/` 保留跟踪日志，便于诊断压缩质量；介意磁盘占用可设为 `false`。
 

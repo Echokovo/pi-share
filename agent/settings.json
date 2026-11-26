@@ -69,7 +69,7 @@
     "agentMaxTurns": 8,
     "observerChunkMaxTokens": 120000,
     "compactAfterTokensMode": "ratio",
-    "compactAfterTokensRatio": 0.5,
+    "compactAfterTokensRatio": 0.4,
     "observationsPoolMaxTokens": 20000,
     "observationsPoolTargetTokens": 10000,
     "model": {

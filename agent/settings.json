@@ -36,7 +36,6 @@
     "compactionCosts": true,
     "reasoningDrops": true
   },
-  "enableInstallTelemetry": false,
   "hideThinkingBlock": true,
   "treeFilterMode": "no-tools",
   "defaultThinkingLevel": "high",

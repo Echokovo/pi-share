@@ -1,6 +1,6 @@
 # 我的 pi 配置
 
-基于 **Pi 1.4.0+** 的个人主力 harness。包含 15 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层可选的多会话运行时（herdr 或 Orca，二选一）。
+基于 **Pi 1.6.1+** 的个人主力 harness。包含 15 个精选扩展、一套子代理与记忆配置、一份全局工作约定，以及一层可选的多会话运行时（herdr 或 Orca，二选一）。
 
 这套配置的核心理念只有三条：
 1. **极限降噪**：过滤树形工具调用展开，上下文与终端滚动区干净一个数量级。
@@ -23,7 +23,7 @@
 > 请阅读 https://github.com/Echokovo/pi-share 中的 README.md，按「1. 快速开始」的步骤 1、步骤 2 帮我安装扩展并落位配置。
 >
 > 要求：
-> 1. 动手前先确认前提：`pi --version` ≥ 1.4.0，`git` 与 `npm` 可用。若 `~/.pi/agent` 下已有旧配置，先备份并展示 diff，不要直接覆盖。
+> 1. 动手前先确认前提：`pi --version` ≥ 1.6.1，`git` 与 `npm` 可用。若 `~/.pi/agent` 下已有旧配置，先备份并展示 diff，不要直接覆盖。
 > 2. 只安装 README 步骤 1 列出的 15 个包，不要自行追加扩展或改动架构。
 > 3. README 顶部的「本机偏好」清单（`~/ws` 工作区约定、WSL2/Docker 网络限制、PaddleOCR-VL、飞书通知、`terminal.images: "kitty"`、外观配色）不是每台机器都需要，逐条问我是否保留，不需要就删掉对应段落。
 > 4. 需要填写密钥（`DEEPSEEK_API_KEY`、`EXA_API_KEY`）、选择模型、修改飞书 `recipient`，或遇到任何分歧时，停下来问我，不要替我决定；密钥只写进你的 shell 配置文件，不要写进仓库。
@@ -115,6 +115,7 @@ Skills 独立于配置目录，由 `skills` CLI 统一管理并落位至 `~/.age
 npx skills add mattpocock/skills -g -s grilling
 npx skills add mattpocock/skills -g -s grill-me
 npx skills add mattpocock/skills -g -s grill-with-docs
+npx skills add mattpocock/skills -g -s domain-modeling  # grill-with-docs 会调用它，缺了只能跑一半
 
 # 文档工程规范组：对齐工业级大厂文风（编写 README / API / 交互报错时启用）
 npx skills add Neeeophytee/agent-stylebooks -g -s github-docs
@@ -354,12 +355,12 @@ pi --resume        # 列出来挑一个
 "treeFilterMode": "no-tools",
 "collapseChangelog": true,
 "quietStartup": "header",
-"showCacheMissNotices": true,
+"notices": { "cacheMisses": true, "cacheWarming": true, "compactionCosts": true, "reasoningDrops": true },
 "tuiMode": "fullscreen",
 "fullscreenExitOutput": "resume-hint"
 ```
-- `"treeFilterMode": "no-tools"`：**体感最明显的降噪项**。工具执行详情不折叠渲染进交互树，会话界面极度清爽（临时看详情可用 `/tree-filter all`）。
-- `"showCacheMissNotices": true`：刻意开启。提示词缓存未命中时即时感知，便于定位 Prompt 破坏性变更。
+- `"treeFilterMode": "no-tools"`：**体感最明显的降噪项**。工具执行详情不折叠渲染进交互树，会话界面极度清爽（临时看全部可在 `/tree` 里按 `ctrl+a`，`ctrl+o` 循环过滤模式）。
+- `"notices.cacheMisses": true`：刻意开启。提示词缓存未命中时即时感知，便于定位 Prompt 破坏性变更；同一 `notices` 组还分别管缓存预热、压缩花费与推理块丢失提示。Pi 1.6.1 起由旧的 `showCacheMissNotices` 拆分而来，旧键仍会自动迁移。
 - `"fullscreenExitOutput": "resume-hint"`：全屏退出时打印一键恢复会话命令，保护上下文不丢失。
 - 视图层另有三个扩展补位：`pi-nano-context`（编辑器下方紧凑分段上下文条，替换默认上下文计）、`pi-context-view`（可视化 base prompt / 工具定义 / 扩展注入）、`@luan.sh/pi-collapse-transcript`（工具活动折叠成可展开分组）。它们管“历史怎么折叠”，与 `treeFilterMode` 管“树里过滤什么”互不替代。
 
@@ -392,11 +393,13 @@ pi --resume        # 列出来挑一个
   "enabled": true,
   "route": "ops",
   "afterMs": 180000,
+  "afterActivityMs": 360000,
+  "resetOnActivity": true,
   "maxReminders": 1
 }
 ```
 - **纯单向输出（`eventMode: "off"`）**：仅向外推送长任务完成、挂起提问通知；不接收入站消息，杜绝终端被外部消息劫持。
-- **超时防死锁**：若交互提问（`ask_user_question`）挂起超过 3 分钟未应答，自动向移动端推送催促消息，离开工位也不会阻塞流水线。
+- **超时防死锁**：若交互提问（`ask_user_question`）挂起 3 分钟且终端没有按键，自动向移动端推送催促消息；等待期间有按键则顺延到 6 分钟（`afterActivityMs` 默认 `2 × afterMs`），把 `resetOnActivity` 设为 `false` 可回到纯计时。离开工位也不会阻塞流水线。
 
 ---
 
@@ -423,7 +426,9 @@ pi --resume        # 列出来挑一个
 
 置于 `~/.pi/agent/AGENTS.md`，对当前设备上运行的所有 pi 进程强制生效。核心包含：
 - **硬性安全防线**：密钥、Token、Cookie 严禁写进任何文件、代码、日志或命令参数；不为“测试全绿”而删改既有测试断言。
-- **先问再动**：`git push` 仅在用户明示后执行，提交前先跑 `git status` 汇报；`git reset --hard/clean/rebase`、`gh pr create/merge/close`、`gh release`、`sudo`，以及改动任务范围外文件、新增架构依赖、改数据库 Schema、ssh remote 目录与配置，一律先确认。
+- **先问再动**：`git push` 仅在用户明示后执行；`git commit` 在用户未明示或需要先审查变更时，先跑 `git status`（必要时附 `git diff` 摘要）汇报并确认；`git reset --hard/clean/rebase`、`gh pr create/merge/close`、`gh release`、`sudo`，以及改动任务范围外文件、新增架构依赖、改数据库 Schema、ssh remote 目录与配置，一律先确认。
+- **不动他人成果**：静默回撤或覆盖仓库中与当前任务上下文不符的现有修改属于禁区——那可能是用户或其他 Agent 的改动，须保留并先确认。
+- **子代理分工**：主会话负责拆解、决策、验收与整合；需读 3 个以上文件定位位置、日志/测试/OCR 等大输出、边界清晰的实现与文档同步、独立审查交给子代理。只并行互不依赖且文件所有权不重叠的任务，并发写同一仓库时用 `isolation: "worktree"`。
 - **编码与排错原则**：按「现有命令 → 删旧或复用 → 平台与依赖 → 最小改动 → 新抽象」取第一个足够的方案；只写当前需求用得上的代码，新抽象、新依赖与防御式代码都要有当前用途；协议、解析、序列化等用成熟库；连续三次失败即停并指出可疑假设。
 - **任务交付自省交代**：阶段任务汇报必须包含 **「验证 / 盲区 / 假设 / 副作用」** 四段式自检，杜绝“全绿即通过”的盲区。
 - **本机运维小节（可选）**：常用命令、WSL2 Docker 网络限制、飞书通知格式、压缩记忆的 `recall` 检索约定，随文件一并落位；不属于这些环境时整段删掉即可。
